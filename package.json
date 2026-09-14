@@ -1,0 +1,43 @@
+{
+  "name": "e-raport",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "preview": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/database.test.mjs && node --import tsx --test tests/*.test.ts",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^4.1.3",
+    "@supabase/ssr": "^0.6.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "classnames": "^2.5.1",
+    "date-fns": "^3.6.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "lucide-react": "^0.344.0",
+    "next": "^15.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.54.2",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.14",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "15.5.25",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.3.0"
+  }
+}

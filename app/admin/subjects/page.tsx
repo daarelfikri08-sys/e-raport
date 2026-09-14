@@ -1,0 +1,9 @@
+import CrudManager, { type CrudRow } from '@/components/admin/CrudManager'
+import { requireRole } from '@/lib/auth/server'; import { parseAdminQuery } from '@/lib/admin-query'; import { createClient } from '@/lib/supabase/server'; import { saveSubject, setSubjectStatus } from './actions'
+export const dynamic = 'force-dynamic'
+export default async function AdminSubjectsPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string; status?: string }> }) {
+  await requireRole('admin'); const query = parseAdminQuery(await searchParams); const client = await createClient(); const pattern = `%${query.search.replace(/[\\%_]/g, '\\$&')}%`
+  let request = client.from('subjects').select('id,code,name,group_name,minimum_score,is_active', { count: 'exact' }).or(`name.ilike.${pattern},code.ilike.${pattern}`).order('name').range((query.page - 1) * 20, query.page * 20 - 1)
+  if (query.status !== 'all') request = request.eq('is_active', query.status === 'active'); const { data, count, error } = await request
+  return <CrudManager title="Mata Pelajaran" description="Kelola kode, kelompok, KKM, dan status mata pelajaran." rows={(data ?? []) as CrudRow[]} count={count ?? 0} page={query.page} search={query.search} status={query.status} error={error ? 'Data mata pelajaran tidak dapat dimuat.' : null} saveAction={saveSubject} statusAction={setSubjectStatus} columns={[{ key: 'code', label: 'Kode' }, { key: 'name', label: 'Nama' }, { key: 'group_name', label: 'Kelompok' }, { key: 'minimum_score', label: 'KKM' }, { key: 'is_active', label: 'Status', render: value => value ? 'Aktif' : 'Nonaktif' }]} fields={[{ name: 'code', label: 'Kode', required: true }, { name: 'name', label: 'Nama', required: true }, { name: 'group_name', label: 'Kelompok' }, { name: 'minimum_score', label: 'KKM', type: 'number', required: true, min: 0, max: 100, step: 0.01 }]} />
+}
