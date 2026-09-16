@@ -10,13 +10,21 @@ export type CrudValue = string | number | boolean | null
 export type CrudRow = Record<string, CrudValue>
 export type CrudResult = { ok: true; message: string } | { ok: false; message: string }
 export interface CrudField { name: string; label: string; type?: 'text' | 'email' | 'tel' | 'number' | 'date' | 'select' | 'textarea'; required?: boolean; min?: number; max?: number; step?: number; options?: { value: string; label: string; disabled?: boolean }[] }
+export type CrudColumnFormat = 'boolean-status' | 'linked-status' | 'percent'
 interface Props {
-  title: string; description: string; rows: CrudRow[]; columns: { key: string; label: string; render?: (value: CrudValue, row: CrudRow) => string }[]
+  title: string; description: string; rows: CrudRow[]; columns: { key: string; label: string; format?: CrudColumnFormat }[]
   fields: CrudField[]; page: number; count: number; search: string; status: string; error?: string | null; note?: string
   toolbar?: ReactNode
   saveAction: (data: FormData) => Promise<CrudResult>; statusAction?: (id: string, active: boolean) => Promise<CrudResult>; deleteAction?: (id: string) => Promise<CrudResult>
 }
 const PAGE_SIZE = 20
+
+function formatValue(value: CrudValue, format?: CrudColumnFormat): string {
+  if (format === 'boolean-status') return value === true ? 'Aktif' : 'Nonaktif'
+  if (format === 'linked-status') return value ? 'Tertaut' : 'Belum tertaut'
+  if (format === 'percent') return `${value ?? 0}%`
+  return String(value ?? '—')
+}
 
 export default function CrudManager({ title, description, rows, columns, fields, page, count, search, status, error, note, toolbar, saveAction, statusAction, deleteAction }: Props) {
   const router = useRouter()
@@ -53,7 +61,7 @@ export default function CrudManager({ title, description, rows, columns, fields,
       <Button type="submit" disabled={disabled}>Terapkan</Button>
     </form>
     {pending && <p role="status">Memuat data…</p>}
-    {!error && <div className="overflow-x-auto rounded-xl border bg-white"><table className="min-w-full text-left text-sm"><thead className="bg-slate-50"><tr>{columns.map(column => <th className="p-4" scope="col" key={column.key}>{column.label}</th>)}<th className="p-4" scope="col">Tindakan</th></tr></thead><tbody>{rows.map(row => <tr className="border-t" key={String(row.id)}>{columns.map(column => <td className="p-4" key={column.key}>{column.render ? column.render(row[column.key], row) : String(row[column.key] ?? '—')}</td>)}<td className="p-4"><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={disabled} onClick={() => setEditing(row)}>Ubah</Button>{(statusAction || deleteAction) && <Button size="sm" variant={row.is_active === false ? 'outline' : 'danger'} disabled={disabled} onClick={() => setConfirming(row)}>{deleteAction ? 'Hapus' : row.is_active === false ? 'Aktifkan' : 'Nonaktifkan'}</Button>}</div></td></tr>)}{rows.length === 0 && <tr><td className="p-10 text-center text-slate-500" colSpan={columns.length + 1}>Tidak ada data yang sesuai.</td></tr>}</tbody></table></div>}
+    {!error && <div className="overflow-x-auto rounded-xl border bg-white"><table className="min-w-full text-left text-sm"><thead className="bg-slate-50"><tr>{columns.map(column => <th className="p-4" scope="col" key={column.key}>{column.label}</th>)}<th className="p-4" scope="col">Tindakan</th></tr></thead><tbody>{rows.map(row => <tr className="border-t" key={String(row.id)}>{columns.map(column => <td className="p-4" key={column.key}>{formatValue(row[column.key], column.format)}</td>)}<td className="p-4"><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={disabled} onClick={() => setEditing(row)}>Ubah</Button>{(statusAction || deleteAction) && <Button size="sm" variant={row.is_active === false ? 'outline' : 'danger'} disabled={disabled} onClick={() => setConfirming(row)}>{deleteAction ? 'Hapus' : row.is_active === false ? 'Aktifkan' : 'Nonaktifkan'}</Button>}</div></td></tr>)}{rows.length === 0 && <tr><td className="p-10 text-center text-slate-500" colSpan={columns.length + 1}>Tidak ada data yang sesuai.</td></tr>}</tbody></table></div>}
     <nav className="flex items-center justify-between gap-3"><p className="text-sm text-slate-600">{count} data · Halaman {page} dari {pages}</p><div className="flex gap-2"><Button variant="outline" disabled={disabled || page <= 1} onClick={() => navigate(page - 1)}>Sebelumnya</Button><Button variant="outline" disabled={disabled || page >= pages} onClick={() => navigate(page + 1)}>Berikutnya</Button></div></nav>
     <Modal isOpen={editing !== null} closeDisabled={busy} onClose={() => setEditing(null)} title={editing === 'new' ? `Tambah ${title}` : `Ubah ${title}`}>
       <form className="space-y-4" onSubmit={event => { event.preventDefault(); void run(() => saveAction(new FormData(event.currentTarget))) }}>
